@@ -607,8 +607,9 @@
   #particleCanvas {
     position: fixed;
     inset: 0;
+    display: block;
     pointer-events: none;
-    z-index: 9999;
+    z-index: 99999;
   }
 
   /* ========== SECTION 通用 — Neo-Brutalism ========== */
@@ -2194,9 +2195,12 @@
           io.unobserve(e.target);
         }
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0.05, rootMargin: '0px 0px -60px 0px' });
 
-    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+    // 延迟一帧再开始观察，让初始布局完成
+    requestAnimationFrame(() => {
+      document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+    });
   })();
 
   /* ========== 点击粒子效果（原生 Canvas） ========== */
