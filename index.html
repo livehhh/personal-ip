@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -2028,8 +2028,8 @@
           h:hS/n, s:sS/n, v:vS/n,
           hueT: 28,                                     // 背景 hue≈119° 皮肤 hue≈25° 差 94° → 安全
           satT: Math.min(0.32, sS/n + 0.18),            // 背景 sat≈0.143 皮肤 sat≈0.36 → 安全边界
-          rgbT: 48,                                     // ⭐ 精确卡点：背景=0~10 / 皮肤 min=50
-          vT: 0.20                                      // 皮肤 v≈0.52 能通过；白衣服 v≈0.7 被挡住
+          rgbT: 38,                                     // 降低阈值：更激进地抠掉边缘绿幕残留
+          vT: 0.22                                      // 稍微提高亮度保护阈值
         };
 
         video.style.display = 'none';
@@ -2063,15 +2063,44 @@
             // 6. 二值中值滤波
             const smoothed = medianFilter3x3(hw, hh, mask);
 
-            // 7. alpha 硬阈值化（hero 背景=视频背景 → 不需要羽化，硬边缘零可见）
-            //    背景色一致时，半透明边缘反而因为混了前景残色产生光晕
-            for (let k = 0; k < hw * hh; k++) {
-              d[k*4+3] = smoothed[k] >= 128 ? 255 : 0;
+            // 7. 3 级 alpha 羽化：边缘过渡 0→85→170→255，彻底消除锯齿和绿边
+            for (let y = 0; y < hh; y++) {
+              for (let x = 0; x < hw; x++) {
+                const idx = y * hw + x;
+                if (smoothed[idx] === 0) {
+                  d[idx*4+3] = 0;
+                  continue;
+                }
+                // 检查 8 邻居里有多少背景像素
+                let bgCount = 0;
+                for (let dy = -1; dy <= 1; dy++) {
+                  for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const nx = x + dx, ny = y + dy;
+                    if (nx < 0 || nx >= hw || ny < 0 || ny >= hh) { bgCount++; continue; }
+                    if (smoothed[ny * hw + nx] === 0) bgCount++;
+                  }
+                }
+                // 邻居全是前景 → 完全不透明
+                if (bgCount === 0) {
+                  d[idx*4+3] = 255;
+                } else if (bgCount <= 3) {
+                  // 少量背景邻居 → 大部分不透明
+                  d[idx*4+3] = 210;
+                } else if (bgCount <= 5) {
+                  // 边缘
+                  d[idx*4+3] = 140;
+                } else {
+                  // 贴边
+                  d[idx*4+3] = 70;
+                }
+              }
             }
             outCtx.putImageData(frame, 0, 0);
 
-            // 9. 放大到主 canvas（关掉抗锯齿 → 保留硬 alpha 边缘，不让 GPU 再制造光晕）
-            ctx.imageSmoothingEnabled = false;
+            // 8. 放大到主 canvas（开启抗锯齿 → 羽化边缘平滑过渡）
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
             ctx.clearRect(0, 0, w, h);
             ctx.drawImage(outCanvas, 0, 0, hw, hh, 0, 0, w, h);
           }
