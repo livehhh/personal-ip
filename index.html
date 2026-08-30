@@ -485,8 +485,8 @@
     mix-blend-mode: normal;
     object-fit: contain;
     background: transparent;
-    image-rendering: -webkit-optimize-contrast;
-    filter: contrast(1.08) saturate(1.12) drop-shadow(0 0 2px rgba(0,0,0,0.15));
+    image-rendering: -webkit-optimize-contrast, crisp-edges;
+    filter: contrast(1.10) saturate(1.15) drop-shadow(0 0 3px rgba(0,0,0,0.2));
   }
 
   /* ========== 左下定位文案 — Neo-Brutalism 白色卡片 + 硬阴影 ========== */
@@ -1416,7 +1416,7 @@
 
     <!-- 人物形象（UNet 抠像 · 透明背景 WebP，无需 Canvas Chroma Key） -->
     <div class="hero-character">
-      <img id="charImg" src="char_transparent.webp" alt="WANGSIYA 形象" width="640" height="360" loading="eager" fetchpriority="high" decoding="async" />
+      <img id="charImg" src="char_transparent.webp" alt="WANGSIYA 形象" width="960" height="540" loading="eager" fetchpriority="high" decoding="async" />
     </div>
   </div>
 
