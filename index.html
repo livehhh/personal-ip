@@ -1878,13 +1878,13 @@
       const rgbDist = Math.sqrt((r-bgR)**2 + (g-bgG)**2 + (b-bgB)**2);
 
       // 【2】灰色背景专用判定：
-      //   A. 低饱和度（<0.12）= 灰色 → 背景（核心！皮肤 sat>0.15）
-      //   B. RGB 距离极小（<25）→ 背景
-      //   C. hue 差小 AND 饱和度低 → 背景
+      //   A. RGB 距离极小（<25）→ 背景
+      //   B. hue 差小 AND 饱和度低（双重保险）→ 背景
+      //   C. 饱和度极低（<0.08）且亮度接近背景 → 背景（最保守）
       // 皮肤 hue≈25° 与灰色背景 hue≈223° 差 198° >> 35 → 天然不触发
-      const isBg = (sat < SAT_T) ||
-                   (rgbDist < RGB_T) ||
-                   (hueDiff < HUE_T && sat < SAT_T * 1.5);
+      const isBg = (rgbDist < RGB_T) ||
+                   (hueDiff < HUE_T && sat < SAT_T) ||
+                   (sat < 0.08 && Math.abs(v - bgV) < 0.12);
       mask[k] = isBg ? 0 : 255;
     }
     return mask;
@@ -2175,8 +2175,10 @@
   video.addEventListener('play', startChromaKey);
   setTimeout(startChromaKey, 1500);
 
-  /* ========== 滚动渐入动效（IntersectionObserver，零依赖） ========== */
+  /* ========== 滚动渐入动效（滚动事件 + rAF 节流） ========== */
   (function() {
+    const els = [];
+
     // 自动给 section 内的卡片元素加 reveal class
     document.querySelectorAll('section').forEach(sec => {
       const children = sec.querySelectorAll('.about-card, .about-photo, .work-card, .exp-card, .cert-card, .edu-card, .eval-card, .contact-card, .section-title, .section-num');
@@ -2185,22 +2187,33 @@
         if (i % 4 === 1) el.classList.add('reveal-delay-1');
         else if (i % 4 === 2) el.classList.add('reveal-delay-2');
         else if (i % 4 === 3) el.classList.add('reveal-delay-3');
+        els.push(el);
       });
     });
 
-    const io = new IntersectionObserver((entries) => {
-      entries.forEach(e => {
-        if (e.isIntersecting) {
-          e.target.classList.add('visible');
-          io.unobserve(e.target);
+    function check() {
+      const h = window.innerHeight || document.documentElement.clientHeight;
+      for (let i = els.length - 1; i >= 0; i--) {
+        const el = els[i];
+        if (el.classList.contains('visible')) continue;
+        const r = el.getBoundingClientRect();
+        if (r.top < h * 0.88 && r.bottom > 0) {
+          el.classList.add('visible');
+          els.splice(i, 1);
         }
-      });
-    }, { threshold: 0.05, rootMargin: '0px 0px -60px 0px' });
+      }
+    }
 
-    // 延迟一帧再开始观察，让初始布局完成
-    requestAnimationFrame(() => {
-      document.querySelectorAll('.reveal').forEach(el => io.observe(el));
-    });
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) { ticking = true; requestAnimationFrame(() => { check(); ticking = false; }); }
+    }, { passive: true });
+    window.addEventListener('resize', () => check());
+
+    // 初始检查
+    requestAnimationFrame(check);
+    setTimeout(check, 300);
+    setTimeout(check, 800);
   })();
 
   /* ========== 点击粒子效果（原生 Canvas） ========== */
