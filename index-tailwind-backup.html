@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>王思雅 · 金融科技准大一</title>
+<!-- Progressive enhancement flag: set BEFORE first paint so reveal elements hide cleanly (no FOUC). If JS is disabled this never runs -> elements stay fully visible (no white screen). -->
+<script>document.documentElement.classList.add('js');</script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&amp;family=Space+Grotesk:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        display: ['"Archivo Black"', 'sans-serif'],
+        sans: ['"Space Grotesk"', 'sans-serif'],
+      },
+      colors: {
+        popbg: '#FFFDF0',
+        mint: '#A3E635',
+        grape: '#C084FC',
+        lemon: '#FDE047',
+        sky: '#38BDF8',
+      }
+    }
+  }
+}
+</script>
+<style>
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background-color: #FFFDF0;
+    background-image: radial-gradient(#000 1px, transparent 1px);
+    background-size: 20px 20px;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  h1,h2,h3,h4 { font-family: 'Archivo Black', 'Space Grotesk', sans-serif; letter-spacing: -0.02em; }
+  /* Hard shadow utility */
+  .hs-4 { box-shadow: 4px 4px 0px 0px #000; }
+  .hs-6 { box-shadow: 6px 6px 0px 0px #000; }
+  .hs-8 { box-shadow: 8px 8px 0px 0px #000; }
+  .hs-2 { box-shadow: 2px 2px 0px 0px #000; }
+  /* Button press interaction */
+  .btn-press {
+    transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .btn-press:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px #000;
+  }
+  .btn-press:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0px 0px 0px 0px #000;
+  }
+  /* Card hover: reverse shift + deeper shadow */
+  .card-press {
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .card-press:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 8px 8px 0px 0px #000;
+  }
+  /* Sticker rotations */
+  .rot-1 { transform: rotate(-2deg); }
+  .rot-2 { transform: rotate(1.5deg); }
+  .rot-3 { transform: rotate(-1deg); }
+  .rot-4 { transform: rotate(2.5deg); }
+  .rot-5 { transform: rotate(-2.5deg); }
+  .rot-6 { transform: rotate(2deg); }
+  .sticker { transition: transform .2s ease; }
+  .sticker:hover { transform: rotate(0deg) scale(1.04); }
+  /* hide scrollbar for nav on mobile */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ===== Scroll progress bar (transform only -> no reflow, 60fps) ===== */
+  #progressBar {
+    transform: scaleX(0);
+    transform-origin: left center;
+    will-change: transform;
+  }
+
+  /* ===== Typewriter breathing cursor ===== */
+  .tw-cursor {
+    display: inline-block;
+    width: 3px;
+    margin-left: 4px;
+    background: #000;
+    animation: blink 1s steps(1) infinite;
+    transform: translateZ(0);
+  }
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
+  }
+
+  /* ===== Reveal-on-scroll (progressive enhancement) =====
+     Only takes effect when <html> has .js. Default state = fully visible,
+     so a script failure NEVER causes a white screen. */
+  .js .reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    will-change: opacity, transform;
+  }
+  .js .reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);
+    transition-delay: var(--d, 0ms);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .js .reveal { opacity: 1 !important; transform: none !important; }
+    .tw-cursor { animation: none; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ===== Confetti canvas ===== */
+  #confettiCanvas {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+  }
+  /* ===== Toast bubble ===== */
+  #toast {
+    position: fixed;
+    left: 50%;
+    bottom: 28px;
+    transform: translate(-50%, 20px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10000;
+    transition: opacity .25s ease, transform .25s ease;
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+
+  @media print {
+    body { background: #fff; background-image: none; }
+    #progressWrap, #confettiCanvas, #toast { display: none !important; }
+    .js .reveal { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+</head>
+<body class="text-black">
+
+<!-- ===== Top scroll progress bar ===== -->
+<div id="progressWrap" class="fixed top-0 left-0 right-0 z-[60] h-1 pointer-events-none">
+  <div id="progressBar" class="h-full w-full bg-gradient-to-r from-cyan-400 to-emerald-400"></div>
+</div>
+
+<!-- ===== Confetti canvas (native, for click feedback) ===== -->
+<canvas id="confettiCanvas"></canvas>
+
+<!-- ===== Toast bubble ===== -->
+<div id="toast" class="bg-black text-popbg border-[3px] border-black hs-4 px-5 py-2.5 font-display text-sm flex items-center gap-2">
+  <i class="ri-check-line"></i><span id="toastText">已操作</span>
+</div>
+
+<!-- ============ TOP NAV ============ -->
+<header class="sticky top-0 z-50 bg-popbg border-b-[3px] border-black">
+  <nav class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+    <a href="#hero" class="flex items-center gap-2 group">
+      <span class="inline-flex items-center justify-center w-10 h-10 bg-mint border-[3px] border-black hs-4 font-display text-lg group-hover:translate-x-[2px] group-hover:translate-y-[2px] transition-transform">W</span>
+      <span class="hidden sm:block font-display text-xl">王思雅</span>
+    </a>
+    <ul class="flex items-center gap-1 sm:gap-2 no-scrollbar overflow-x-auto">
+      <li><a href="#hero" class="btn-press inline-block px-3 py-1.5 bg-white border-2 border-black hs-4 font-bold text-sm whitespace-nowrap">首页</a></li>
+      <li><a href="#highlights" class="btn-press inline-block px-3 py-1.5 bg-lemon border-2 border-black hs-4 font-bold text-sm whitespace-nowrap">亮点</a></li>
+      <li><a href="#experience" class="btn-press inline-block px-3 py-1.5 bg-grape border-2 border-black hs-4 font-bold text-sm whitespace-nowrap">经历</a></li>
+      <li><a href="#education" class="btn-press inline-block px-3 py-1.5 bg-sky border-2 border-black hs-4 font-bold text-sm whitespace-nowrap">教育</a></li>
+      <li><a href="#profile" class="btn-press inline-block px-3 py-1.5 bg-mint border-2 border-black hs-4 font-bold text-sm whitespace-nowrap">自评</a></li>
+    </ul>
+    <div class="flex items-center gap-2">
+      <button onclick="window.print()" class="btn-press inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border-2 border-black hs-4 font-bold text-sm"><i class="ri-printer-line"></i><span class="hidden sm:inline">打印</span></button>
+    </div>
+  </nav>
+</header>
+
+<!-- ============ HERO ============ -->
+<section id="hero" class="max-w-6xl mx-auto px-4 pt-8 sm:pt-14 pb-10">
+  <div class="grid md:grid-cols-[1fr_280px] gap-6">
+    <!-- left: name + intro -->
+    <div class="bg-white border-[3px] border-black hs-8 p-6 sm:p-8 relative">
+      <span class="absolute -top-4 -left-3 sticker rot-1 bg-grape border-[3px] border-black hs-2 px-3 py-1 font-display text-sm text-black">2026 准大一</span>
+      <span class="absolute -top-4 right-6 sticker rot-4 bg-lemon border-[3px] border-black hs-2 px-3 py-1 font-display text-sm">金融科技</span>
+      <h1 class="font-display text-5xl sm:text-7xl leading-[0.95] mt-3">王思雅</h1>
+      <!-- Typewriter narrative line -->
+      <div class="mt-3 font-display text-lg sm:text-2xl flex items-center min-h-[1.6em]">
+        <span id="twText" class="bg-lemon border-2 border-black px-2 py-0.5"></span><span class="tw-cursor self-stretch">&nbsp;</span>
+      </div>
+      <p class="mt-4 font-bold text-lg sm:text-xl">仰恩大学 · 经济学院 ｜ 金融科技 2026级准大一</p>
+      <p class="mt-3 text-base sm:text-lg leading-relaxed max-w-2xl">数学课代表 · 学生部成员。兼具数理逻辑与组织沟通能力，致力于金融科技领域的学习与实践，乐于团队协作与持续成长。</p>
+      <!-- tags as stickers -->
+      <div class="mt-5 flex flex-wrap gap-2">
+        <span class="sticker rot-2 bg-mint border-2 border-black hs-2 px-3 py-1 font-bold text-sm">金融科技</span>
+        <span class="sticker rot-5 bg-grape border-2 border-black hs-2 px-3 py-1 font-bold text-sm">数据分析</span>
+        <span class="sticker rot-3 bg-lemon border-2 border-black hs-2 px-3 py-1 font-bold text-sm">活动策划</span>
+        <span class="sticker rot-6 bg-sky border-2 border-black hs-2 px-3 py-1 font-bold text-sm">团队协作</span>
+        <span class="sticker rot-1 bg-white border-2 border-black hs-2 px-3 py-1 font-bold text-sm">数理逻辑</span>
+      </div>
+      <!-- contact buttons -->
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="tel:+8615659311344" class="btn-press inline-flex items-center gap-2 px-4 py-2.5 bg-mint border-[3px] border-black hs-4 font-display text-sm"><i class="ri-phone-fill"></i>15659311344</a>
+        <span class="btn-press inline-flex items-center gap-2 px-4 py-2.5 bg-lemon border-[3px] border-black hs-4 font-display text-sm"><i class="ri-chat-3-fill"></i>微信</span>
+        <span class="btn-press inline-flex items-center gap-2 px-4 py-2.5 bg-grape border-[3px] border-black hs-4 font-display text-sm"><i class="ri-chat-1-fill"></i>QQ</span>
+        <button id="copyMail" class="btn-press inline-flex items-center gap-2 px-4 py-2.5 bg-white border-[3px] border-black hs-4 font-display text-sm"><i class="ri-file-copy-fill"></i>复制邮箱</button>
+        <button id="sayHi" class="btn-press inline-flex items-center gap-2 px-4 py-2.5 bg-sky border-[3px] border-black hs-4 font-display text-sm"><i class="ri-hand-heart-fill"></i>打招呼</button>
+      </div>
+    </div>
+
+    <!-- right: avatar card -->
+    <div class="bg-lemon border-[3px] border-black hs-8 p-5 flex flex-col items-center justify-center gap-4">
+      <div class="w-full aspect-square bg-white border-[3px] border-black hs-4 overflow-hidden flex items-center justify-center">
+        <img src="certificate.jpg" alt="人工智能训练师高级证书" class="w-full h-full object-contain" onerror="this.style.display='none';this.parentElement.innerHTML='&lt;i class=\'ri-image-2-line text-5xl\'&gt;&lt;/i&gt;&lt;span class=\'font-bold text-sm\'&gt;📷 请上传证书图片&lt;/span&gt;'>
+      </div>
+      <a href="mailto:wangsiya109@icloud.com" class="btn-press w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 bg-white border-[3px] border-black hs-4 font-bold text-sm break-all"><i class="ri-mail-fill"></i>wangsiya109@icloud.com</a>
+      <div class="w-full bg-white border-2 border-black hs-2 px-3 py-2 font-bold text-sm text-center">🏫 宁德市博雅培文学校<br><span class="text-xs">2023–2026</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HIGHLIGHTS ============ -->
+<section id="highlights" class="max-w-6xl mx-auto px-4 py-10">
+  <div class="reveal flex items-center gap-3 mb-6">
+    <h2 class="font-display text-3xl sm:text-5xl">✨ 亮点成果</h2>
+    <span class="sticker rot-4 bg-grape border-[3px] border-black hs-2 px-3 py-1 font-display text-sm">数据说话</span>
+  </div>
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+    <div class="reveal card-press bg-mint border-[3px] border-black hs-6 p-5" style="--d:0ms">
+      <p class="font-display text-4xl sm:text-5xl">3000<span class="text-2xl">+</span></p>
+      <p class="mt-2 font-bold text-sm">活动覆盖师生人次</p>
+    </div>
+    <div class="reveal card-press bg-grape border-[3px] border-black hs-6 p-5" style="--d:90ms">
+      <p class="font-display text-4xl sm:text-5xl">92<span class="text-2xl">%</span></p>
+      <p class="mt-2 font-bold text-sm">活动满意度</p>
+    </div>
+    <div class="reveal card-press bg-lemon border-[3px] border-black hs-6 p-5" style="--d:180ms">
+      <p class="font-display text-4xl sm:text-5xl">40<span class="text-2xl">%</span></p>
+      <p class="mt-2 font-bold text-sm">诉求响应效率提升</p>
+    </div>
+    <div class="reveal card-press bg-sky border-[3px] border-black hs-6 p-5" style="--d:270ms">
+      <p class="font-display text-4xl sm:text-5xl">10.3<span class="text-2xl">%</span></p>
+      <p class="mt-2 font-bold text-sm">数学平均分提升</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EXPERIENCE ============ -->
+<section id="experience" class="max-w-6xl mx-auto px-4 py-10">
+  <div class="reveal flex items-center gap-3 mb-6">
+    <h2 class="font-display text-3xl sm:text-5xl">📋 实践经历</h2>
+    <span class="sticker rot-2 bg-mint border-[3px] border-black hs-2 px-3 py-1 font-display text-sm">校园实践</span>
+  </div>
+
+  <div class="space-y-6">
+    <!-- exp 1 -->
+    <article class="reveal card-press bg-white border-[3px] border-black hs-6 p-5 sm:p-7" style="--d:0ms">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <span class="sticker rot-3 inline-block bg-grape border-2 border-black hs-2 px-2.5 py-1 font-display text-sm">学生部成员</span>
+          <h3 class="font-display text-2xl sm:text-3xl mt-2">宁德市博雅培文学校</h3>
+        </div>
+        <span class="sticker rot-6 bg-lemon border-2 border-black hs-2 px-3 py-1 font-bold text-sm">2024.09 – 2026.06</span>
+      </div>
+      <ul class="mt-4 space-y-3 text-base leading-relaxed list-none">
+        <li class="flex gap-2"><span class="font-display text-mint">▸</span><span>参与策划并执行校级大型活动6场（迎新晚会、校园文化节、成人礼仪式），负责流程设计与现场应急管理，累计覆盖师生超3000人次，活动满意度达92%。</span></li>
+        <li class="flex gap-2"><span class="font-display text-grape">▸</span><span>作为学生部与班级联络枢纽，收集反馈学生意见30余条，推动食堂餐品优化、自习室延长开放等改进措施落地，诉求响应效率提升40%。</span></li>
+      </ul>
+    </article>
+
+    <!-- exp 2 -->
+    <article class="reveal card-press bg-white border-[3px] border-black hs-6 p-5 sm:p-7" style="--d:120ms">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <span class="sticker rot-5 inline-block bg-mint border-2 border-black hs-2 px-2.5 py-1 font-display text-sm">数学课代表</span>
+          <h3 class="font-display text-2xl sm:text-3xl mt-2">宁德市博雅培文学校</h3>
+        </div>
+        <span class="sticker rot-1 bg-sky border-2 border-black hs-2 px-3 py-1 font-bold text-sm">2023.09 – 2026.06</span>
+      </div>
+      <ul class="mt-4 space-y-3 text-base leading-relaxed list-none">
+        <li class="flex gap-2"><span class="font-display text-sky">▸</span><span>连续3年担任班级数学课代表，协助批改作业、整理错题集，每周组织2次课后答疑小组，班级数学平均分从78分提升至86分（+10.3%）。</span></li>
+        <li class="flex gap-2"><span class="font-display text-lemon">▸</span><span>定期收集同学对教学进度的建议，形成书面反馈周报提交教师，促进教学节奏调整，课堂互动参与率提升35%。</span></li>
+        <li class="flex gap-2"><span class="font-display text-grape">▸</span><span>在期中/期末考试前编制模拟测试卷3套，覆盖高频考点与易错题型，班级平均分较上一学期同类考试提高5.2分。</span></li>
+      </ul>
+    </article>
+  </div>
+</section>
+
+<!-- ============ EDUCATION ============ -->
+<section id="education" class="max-w-6xl mx-auto px-4 py-10">
+  <div class="reveal flex items-center gap-3 mb-6">
+    <h2 class="font-display text-3xl sm:text-5xl">🎓 教育 &amp; 证书</h2>
+    <span class="sticker rot-5 bg-sky border-[3px] border-black hs-2 px-3 py-1 font-display text-sm">学历 / 认证</span>
+  </div>
+  <div class="grid md:grid-cols-2 gap-6">
+    <!-- edu 1 -->
+    <article class="reveal card-press bg-mint border-[3px] border-black hs-6 p-6" style="--d:0ms">
+      <span class="sticker rot-2 inline-block bg-white border-2 border-black hs-2 px-2.5 py-1 font-display text-sm">本科</span>
+      <h3 class="font-display text-2xl sm:text-3xl mt-3">仰恩大学 · 金融科技</h3>
+      <p class="font-bold text-sm mt-1">2026.09 – 2030.06</p>
+      <p class="mt-3 text-base leading-relaxed">2026年新设特色专业，聚焦区块链金融、智能投顾、量化分析与Python金融应用。拟修课程：金融学、计量经济学、数据分析与数据挖掘、人工智能金融、区块链金融等。逻辑推理与数理建模能力突出，为金融科技专业所需的量化分析基础奠定扎实功底。</p>
+    </article>
+    <!-- edu 2 -->
+    <article class="reveal card-press bg-grape border-[3px] border-black hs-6 p-6" style="--d:120ms">
+      <span class="sticker rot-4 inline-block bg-white border-2 border-black hs-2 px-2.5 py-1 font-display text-sm">证书</span>
+      <h3 class="font-display text-2xl sm:text-3xl mt-3">人工智能训练师（高级）</h3>
+      <p class="font-bold text-sm mt-1">阿里达摩院 · 证书编号 AIT260827165014000120 · 2026.08.27</p>
+      <p class="mt-3 text-base leading-relaxed">完成达摩院智能客服"人工智能训练师"高级培训课程并认证合格。深入掌握人工智能进阶理论、数据标注高级规范、模型训练与调优方法论，具备独立完成AI项目从数据准备、模型训练到部署评估的全链路能力。证书有效期至2027年8月27日。</p>
+    </article>
+  </div>
+
+  <!-- portfolio -->
+  <div class="mt-6 reveal">
+    <div class="flex items-center gap-3 mb-4">
+      <h3 class="font-display text-2xl sm:text-3xl">🏆 证书展示 · 人工智能训练师（高级）</h3>
+      <span class="sticker rot-1 bg-lemon border-2 border-black hs-2 px-2.5 py-1 font-bold text-sm">AIT · 高级认证</span>
+    </div>
+    <div class="card-press bg-sky border-[3px] border-black hs-6 p-3 sm:p-4 flex flex-col items-center justify-center gap-3 min-h-[180px]">
+      <div class="w-full bg-white border-[3px] border-black hs-4 overflow-hidden flex items-center justify-center">
+        <img src="certificate.jpg" alt="人工智能训练师高级证书" class="w-full h-auto max-h-[420px] object-contain" onerror="this.style.display='none';this.parentElement.innerHTML='&lt;i class=\'ri-image-line text-4xl\'&gt;&lt;/i&gt;&lt;p class=\'font-display text-lg\'&gt;🖼️ 请上传证书图片为 certificate.jpg&lt;/p&gt;'">
+      </div>
+      <p class="font-bold text-sm">证书编号：AIT260827165014000120 ｜ 颁发日期：2026年8月27日</p>
+    </div>
+  </div>
+
+  <!-- project: sky fight game -->
+  <div class="mt-6 reveal">
+    <div class="flex items-center gap-3 mb-4">
+      <h3 class="font-display text-2xl sm:text-3xl">✈️ 项目作品 · 星穹战机</h3>
+      <span class="sticker rot-2 bg-mint border-2 border-black hs-2 px-2.5 py-1 font-bold text-sm">Canvas 游戏开发</span>
+    </div>
+    <a href="https://wsy-skyfight.netlify.app/" target="_blank" rel="noopener noreferrer" class="card-press block bg-sky border-[3px] border-black hs-6 p-3 sm:p-4 group">
+      <div class="bg-white border-[3px] border-black hs-4 p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4">
+        <div class="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-sky border-[3px] border-black hs-2 flex items-center justify-center">
+          <i class="ri-flight-takeoff-line text-5xl sm:text-6xl"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h4 class="font-display text-xl sm:text-2xl">Sky Fight · 星穹战机</h4>
+          <p class="mt-2 text-sm sm:text-base leading-relaxed">基于 HTML5 Canvas 开发的经典星穹战机游戏，支持键盘/触屏操作，包含敌机生成、碰撞检测、分数统计等完整游戏逻辑。</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="sticker rot-1 bg-mint border-2 border-black hs-2 px-2 py-0.5 font-bold text-xs">Canvas</span>
+            <span class="sticker rot-3 bg-grape border-2 border-black hs-2 px-2 py-0.5 font-bold text-xs">JavaScript</span>
+            <span class="sticker rot-5 bg-lemon border-2 border-black hs-2 px-2 py-0.5 font-bold text-xs">游戏开发</span>
+          </div>
+        </div>
+        <div class="flex-shrink-0 flex items-center gap-2 bg-black text-popbg border-[3px] border-black hs-4 px-4 py-2 font-display text-sm group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] transition-transform">
+          <i class="ri-external-link-fill"></i>
+          <span>点击试玩</span>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- project: tank battle game -->
+  <div class="mt-6 reveal">
+    <div class="flex items-center gap-3 mb-4">
+      <h3 class="font-display text-2xl sm:text-3xl">🪖 项目作品 · 坦克大战</h3>
+      <span class="sticker rot-2 bg-lemon border-2 border-black hs-2 px-2.5 py-1 font-bold text-sm">经典复刻</span>
+    </div>
+    <a href="https://livehhh.github.io/tank-battle-game/" target="_blank" rel="noopener noreferrer" class="card-press block bg-mint border-[3px] border-black hs-6 p-3 sm:p-4 group">
+      <div class="bg-white border-[3px] border-black hs-4 p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4">
+        <div class="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 bg-lemon border-[3px] border-black hs-2 flex items-center justify-center">
+          <i class="ri-shield-star-line text-5xl sm:text-6xl"></i>
+        </div>
+        <div class="flex-1 min-w-0">
+          <h4 class="font-display text-xl sm:text-2xl">Tank Battle · 坦克大战</h4>
+          <p class="mt-2 text-sm sm:text-base leading-relaxed">复刻经典坦克大战游戏，支持单人闯关模式，包含地图编辑、敌人AI、基地保卫等核心玩法，像素风格视觉呈现。</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <span class="sticker rot-1 bg-sky border-2 border-black hs-2 px-2 py-0.5 font-bold text-xs">HTML5</span>
+            <span class="sticker rot-3 bg-mint border-2 border-black hs-2 px-2 py-0.5 font-bold text-xs">Canvas</span>
+            <span class="sticker rot-5 bg-grape border-2 border-black hs-2 px-2 py-0.5 font-bold text-xs">像素游戏</span>
+          </div>
+        </div>
+        <div class="flex-shrink-0 flex items-center gap-2 bg-black text-popbg border-[3px] border-black hs-4 px-4 py-2 font-display text-sm group-hover:translate-x-[-2px] group-hover:translate-y-[-2px] transition-transform">
+          <i class="ri-external-link-fill"></i>
+          <span>点击试玩</span>
+        </div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- ============ SELF EVALUATION ============ -->
+<section id="profile" class="max-w-6xl mx-auto px-4 py-10">
+  <div class="reveal flex items-center gap-3 mb-6">
+    <h2 class="font-display text-3xl sm:text-5xl">🌟 自我评价</h2>
+    <span class="sticker rot-3 bg-lemon border-[3px] border-black hs-2 px-3 py-1 font-display text-sm">关于我</span>
+  </div>
+  <div class="grid sm:grid-cols-2 gap-6">
+    <article class="reveal card-press bg-white border-[3px] border-black hs-6 p-6" style="--d:0ms">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex w-11 h-11 items-center justify-center bg-mint border-[3px] border-black hs-2"><i class="ri-function-line text-xl"></i></span>
+        <h3 class="font-display text-xl sm:text-2xl">数理逻辑扎实</h3>
+      </div>
+      <p class="mt-3 text-base leading-relaxed">3年数学课代表经历，锻炼出严谨的推理习惯和量化思维，能够快速从数据中发现规律并转化为决策依据。</p>
+    </article>
+    <article class="reveal card-press bg-white border-[3px] border-black hs-6 p-6" style="--d:90ms">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex w-11 h-11 items-center justify-center bg-grape border-[3px] border-black hs-2"><i class="ri-rocket-2-line text-xl"></i></span>
+        <h3 class="font-display text-xl sm:text-2xl">组织执行高效</h3>
+      </div>
+      <p class="mt-3 text-base leading-relaxed">学生部多场大型活动实战经验，擅长将目标拆解为可执行步骤，在有限资源下确保交付质量，具备较强的责任心和执行力。</p>
+    </article>
+    <article class="reveal card-press bg-white border-[3px] border-black hs-6 p-6" style="--d:180ms">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex w-11 h-11 items-center justify-center bg-lemon border-[3px] border-black hs-2"><i class="ri-cpu-line text-xl"></i></span>
+        <h3 class="font-display text-xl sm:text-2xl">拥抱金融科技</h3>
+      </div>
+      <p class="mt-3 text-base leading-relaxed">持有阿里达摩院人工智能训练师（高级）证书，对AI与金融的交叉领域充满兴趣，持续通过慕课、行业资讯保持知识更新，期待在大学阶段深入钻研并参与相关竞赛/项目。</p>
+    </article>
+    <article class="reveal card-press bg-white border-[3px] border-black hs-6 p-6" style="--d:270ms">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex w-11 h-11 items-center justify-center bg-sky border-[3px] border-black hs-2"><i class="ri-chat-smile-3-line text-xl"></i></span>
+        <h3 class="font-display text-xl sm:text-2xl">沟通亲和力强</h3>
+      </div>
+      <p class="mt-3 text-base leading-relaxed">善于倾听同学需求，能够用简洁语言解释复杂问题，乐于团队合作，曾多次担任跨年级活动联络人，促进信息高效传递。</p>
+    </article>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="max-w-6xl mx-auto px-4 py-10">
+  <div class="reveal bg-black text-popbg border-[3px] border-black hs-6 p-6 flex flex-wrap items-center justify-between gap-3">
+    <p class="font-display text-lg">王思雅 · 金融科技准大一</p>
+    <p class="font-bold text-sm">最后更新 2026年8月</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ===== 1. Scroll progress bar (transform only) ===== */
+  var bar = document.getElementById('progressBar');
+  var ticking = false;
+  function updateProgress() {
+    var h = document.documentElement;
+    var max = (h.scrollHeight - h.clientHeight) || 1;
+    var p = Math.min(1, Math.max(0, (h.scrollTop || document.body.scrollTop) / max));
+    bar.style.transform = 'scaleX(' + p + ')';
+    ticking = false;
+  }
+  function onScroll() {
+    if (!ticking) {
+      window.requestAnimationFrame(updateProgress);
+      ticking = true;
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  updateProgress();
+
+  /* ===== 2. Typewriter (pure JS) ===== */
+  var words = ['数据分析探索者', '全栈开发学习者', 'AI应用实践者'];
+  var twEl = document.getElementById('twText');
+  if (twEl) {
+    var wi = 0, ci = 0, deleting = false;
+    function typeLoop() {
+      var w = words[wi];
+      if (!deleting) {
+        ci++;
+        twEl.textContent = w.slice(0, ci);
+        if (ci >= w.length) { deleting = true; setTimeout(typeLoop, 1400); return; }
+        setTimeout(typeLoop, 110);
+      } else {
+        ci--;
+        twEl.textContent = w.slice(0, ci);
+        if (ci <= 0) { deleting = false; wi = (wi + 1) % words.length; setTimeout(typeLoop, 280); return; }
+        setTimeout(typeLoop, 55);
+      }
+    }
+    typeLoop();
+  }
+
+  /* ===== 3. Reveal on scroll (IntersectionObserver) ===== */
+  var reveals = document.querySelectorAll('.reveal');
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+    reveals.forEach(function (el) { io.observe(el); });
+    // Fallback safety: if anything is still hidden after 2.5s, show it.
+    setTimeout(function () {
+      reveals.forEach(function (el) { el.classList.add('is-visible'); });
+    }, 2500);
+  } else {
+    reveals.forEach(function (el) { el.classList.add('is-visible'); });
+  }
+
+  /* ===== 4. Confetti (native canvas) + toast ===== */
+  var canvas = document.getElementById('confettiCanvas');
+  var ctx = canvas.getContext('2d');
+  var particles = [];
+  var running = false;
+  var palette = ['#A3E635', '#C084FC', '#FDE047', '#38BDF8', '#000000'];
+  function sizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  sizeCanvas();
+  window.addEventListener('resize', sizeCanvas);
+
+  function spawn(x, y, n) {
+    for (var i = 0; i < n; i++) {
+      var ang = Math.random() * Math.PI * 2;
+      var sp = 3 + Math.random() * 6;
+      particles.push({
+        x: x, y: y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp - 3,
+        g: 0.18 + Math.random() * 0.12,
+        size: 5 + Math.random() * 7,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.3,
+        color: palette[(Math.random() * palette.length) | 0],
+        life: 1
+      });
+    }
+    if (!running) { running = true; requestAnimationFrame(loop); }
+  }
+  function loop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.vy += p.g;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.life -= 0.012;
+      if (p.life <= 0 || p.y > canvas.height + 40) { particles.splice(i, 1); continue; }
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+      ctx.restore();
+    }
+    if (particles.length > 0) {
+      requestAnimationFrame(loop);
+    } else {
+      running = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  }
+
+  var toast = document.getElementById('toast');
+  var toastText = document.getElementById('toastText');
+  var toastTimer = null;
+  function showToast(msg) {
+    toastText.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 1900);
+  }
+
+  function fireConfetti(x, y) { spawn(x, y, 46); }
+
+  var copyMail = document.getElementById('copyMail');
+  if (copyMail) {
+    copyMail.addEventListener('click', function (e) {
+      var x = (e.clientX || window.innerWidth / 2);
+      var y = (e.clientY || window.innerHeight / 2);
+      fireConfetti(x, y);
+      var email = 'wangsiya109@icloud.com';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(email).then(function () {
+          showToast('邮箱已复制：' + email);
+        }).catch(function () { showToast('邮箱：' + email); });
+      } else {
+        showToast('邮箱：' + email);
+      }
+    });
+  }
+  var sayHi = document.getElementById('sayHi');
+  if (sayHi) {
+    sayHi.addEventListener('click', function (e) {
+      var x = (e.clientX || window.innerWidth / 2);
+      var y = (e.clientY || window.innerHeight / 2);
+      fireConfetti(x, y);
+      showToast('你好！我是王思雅，期待与你交流 ✦');
+    });
+  }
+})();
+</script>
+
+
+
+</body></html>
