@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>WANGSIYA · Personal IP</title>
 
 <!-- Google Fonts: Space Grotesk (正文) + Archivo Black (标题) -->
@@ -81,6 +81,9 @@
     scroll-behavior: smooth;
     font-family: "Space Grotesk", system-ui, sans-serif;
     color: var(--nb-black);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+    touch-action: manipulation;
   }
 
   /* ==== Neo-Brutalism 基础层 ==== */
@@ -357,6 +360,70 @@
   .btn-catch:active {
     transform: translate(1px, 1px);
     box-shadow: 0 0 0 var(--nb-black);
+  }
+
+  /* ========== 移动端汉堡菜单 ========== */
+  .menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 38px;
+    height: 38px;
+    background: var(--nb-yellow);
+    border: var(--nb-border-sm);
+    box-shadow: var(--nb-shadow-sm);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 0;
+  }
+  .menu-toggle span {
+    display: block;
+    width: 100%;
+    height: 3px;
+    background: var(--nb-black);
+    transition: transform 0.25s ease, opacity 0.25s ease;
+  }
+  .menu-toggle.active span:nth-child(1) { transform: translateY(8px) rotate(45deg); }
+  .menu-toggle.active span:nth-child(2) { opacity: 0; }
+  .menu-toggle.active span:nth-child(3) { transform: translateY(-8px) rotate(-45deg); }
+
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: 64px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background: var(--nb-bg);
+    border-bottom: 3px solid var(--nb-black);
+    box-shadow: var(--nb-shadow);
+    z-index: 99;
+    padding: 12px 20px;
+    gap: 2px;
+  }
+  .mobile-menu a {
+    display: block;
+    padding: 14px 16px;
+    color: var(--nb-black);
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid rgba(0,0,0,0.08);
+    transition: background 0.15s ease;
+  }
+  .mobile-menu a:last-child { border-bottom: none; }
+  .mobile-menu a:hover { background: var(--nb-lime); }
+  .mobile-menu.open {
+    display: flex;
+    animation: menuSlide 0.2s ease;
+  }
+  @keyframes menuSlide {
+    from { opacity: 0; transform: translateY(-12px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   /* ========== HERO CONTENT ========== */
@@ -1025,20 +1092,47 @@
     color: var(--nb-yellow);
   }
 
-  /* ========== RESPONSIVE ========== */
+  /* ========== RESPONSIVE — 平板 (≤1024px) ========== */
+  @media (max-width: 1024px) {
+    .navbar { padding: 0 28px; }
+    .nav-right { gap: 16px; }
+    .nav-links { gap: 18px; }
+
+    .hero-content { padding: 70px 28px 0; }
+    .hero-title { font-size: clamp(56px, 13vw, 120px); }
+    .hero-character { width: clamp(280px, 36vw, 480px); height: 62vh; }
+
+    .hero-tagline { max-width: 300px; padding: 16px 20px; }
+
+    .about { padding: 100px 28px 70px; gap: 36px; }
+    .about-left h2 { font-size: clamp(48px, 9vw, 90px); }
+    .works { padding: 100px 28px 70px; }
+    .experience { padding: 100px 28px 70px; }
+    .education { padding: 100px 28px 70px; }
+    .evaluation { padding: 100px 28px 70px; }
+    .contact { padding: 100px 28px 70px; }
+    .section-num { font-size: 34px; top: 44px; }
+  }
+
+  /* ========== RESPONSIVE — 手机 (≤960px) ========== */
   @media (max-width: 960px) {
     .navbar { padding: 0 20px; }
-    .nav-right { gap: 16px; }
+    .nav-right { gap: 14px; }
     .nav-links { display: none; }
+    .btn-catch { display: none; }
+    .menu-toggle { display: flex; }
 
-    .hero-title { font-size: clamp(60px, 17vw, 160px); }
+    .hero-content { padding: 60px 20px 0; }
+    .hero-title { font-size: clamp(50px, 15vw, 100px); }
     .hero-character { width: 260px; height: 50vh; bottom: 20px; }
 
     .hero-tagline {
       position: relative;
       left: auto;
       bottom: auto;
-      margin-top: 30px;
+      margin-top: 24px;
+      max-width: 100%;
+      padding: 16px 18px;
       text-align: center;
     }
 
@@ -1047,20 +1141,88 @@
 
     .about {
       grid-template-columns: 1fr;
-      padding: 120px 20px 60px;
-      gap: 40px;
+      padding: 80px 20px 50px;
+      gap: 36px;
     }
-    .about-left h2 { font-size: clamp(56px, 18vw, 100px); }
-    .section-num { font-size: 28px; top: 40px; right: 20px; opacity: 0.3; }
+    .about-left h2 { font-size: clamp(44px, 16vw, 90px); }
+    .section-num { font-size: 28px; top: 36px; right: 20px; opacity: 0.3; }
 
-    .works { padding: 120px 20px 60px; }
+    .works { padding: 80px 20px 50px; }
     .works-grid { grid-template-columns: 1fr; }
 
-    .contact { padding: 120px 20px 60px; }
-    .contact .section-title { font-size: clamp(50px, 18vw, 100px); }
-    .contact-cta { padding: 14px 34px; font-size: 18px; }
+    .experience { padding: 80px 20px 50px; }
+    .exp-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .exp-header .section-title { font-size: clamp(36px, 10vw, 72px); }
 
-    footer { flex-direction: column; gap: 10px; text-align: center; }
+    .education { padding: 80px 20px 50px; }
+    .edu-grid { grid-template-columns: 1fr; }
+
+    .evaluation { padding: 80px 20px 50px; }
+    .eval-grid { grid-template-columns: 1fr; }
+
+    .cert-grid { grid-template-columns: 1fr; }
+    .cert-card { flex-direction: column; }
+    .cert-card-preview { width: 100%; }
+
+    .contact { padding: 80px 20px 50px; }
+    .contact .section-title { font-size: clamp(40px, 14vw, 80px); }
+    .contact-cta { padding: 14px 30px; font-size: 17px; }
+    .contact-links { gap: 10px; }
+    .contact-links a { padding: 6px 12px; font-size: 11px; }
+
+    footer { flex-direction: column; gap: 10px; text-align: center; padding: 22px 20px; }
+  }
+
+  /* ========== RESPONSIVE — 小手机 (≤480px) ========== */
+  @media (max-width: 480px) {
+    .navbar { padding: 0 14px; }
+    .navbar .logo { font-size: 12px; letter-spacing: 1px; }
+    .nav-right { gap: 10px; }
+    .nb-btn { padding: 8px 14px; font-size: 12px; }
+
+    .hero-content { padding: 50px 14px 0; }
+    .hero-title { font-size: clamp(40px, 13vw, 72px); -webkit-text-stroke: 2px var(--nb-black); }
+    .hero-character { width: 200px; height: 42vh; bottom: 10px; }
+    .hero-tagline { padding: 12px 14px; margin-top: 18px; }
+    .tagline-role { font-size: 12px; }
+    .tagline-zh { font-size: 13px; line-height: 1.5; }
+    .tagline-meta .item { font-size: 12px; }
+
+    .about { padding: 60px 14px 40px; gap: 28px; }
+    .about-left h2 { font-size: clamp(36px, 14vw, 60px); -webkit-text-stroke: 2px var(--nb-black); }
+    .about-stats { gap: 14px; }
+
+    .works { padding: 60px 14px 40px; }
+    .works-grid { grid-template-columns: 1fr; gap: 16px; }
+    .work-info { padding: 14px 16px 18px; }
+
+    .experience { padding: 60px 14px 40px; }
+    .exp-header .section-title { font-size: clamp(30px, 12vw, 50px); -webkit-text-stroke: 2px var(--nb-black); }
+    .exp-card { padding: 16px; }
+    .exp-card-head { flex-direction: column; gap: 8px; }
+    .exp-card h3 { font-size: 18px; }
+    .exp-card li { font-size: 13px; padding-left: 18px; }
+
+    .education { padding: 60px 14px 40px; }
+    .edu-grid { grid-template-columns: 1fr; gap: 16px; }
+    .edu-card { padding: 16px; }
+
+    .evaluation { padding: 60px 14px 40px; }
+    .eval-grid { grid-template-columns: 1fr; gap: 14px; }
+    .eval-card { padding: 14px; }
+
+    .cert-grid { grid-template-columns: 1fr; gap: 16px; }
+    .cert-card { padding: 14px; }
+
+    .contact { padding: 60px 14px 40px; }
+    .contact .section-title { font-size: clamp(32px, 13vw, 56px); -webkit-text-stroke: 2px var(--nb-black); }
+    .contact-cta { padding: 12px 24px; font-size: 15px; }
+    .contact-sub { font-size: 14px; }
+    .contact-links { gap: 8px; }
+    .contact-links a { padding: 5px 10px; font-size: 10px; }
+
+    footer { padding: 18px 14px; font-size: 10px; }
+    .section-num { font-size: 22px; top: 28px; right: 14px; }
   }
 
   /* ============ 滚动进度条 ============ */
@@ -1209,8 +1371,19 @@
       <li><a href="#contact">联系</a></li>
     </ul>
     <button class="btn-catch confetti-button" data-toast="✨ 已锁定！我在这儿等你">抓住我</button>
+    <button class="menu-toggle" id="menuToggle" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </nav>
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#about">关于我</a>
+  <a href="#experience">经历</a>
+  <a href="#works">作品</a>
+  <a href="#education">教育</a>
+  <a href="#evaluation">自评</a>
+  <a href="#contact">联系</a>
+</div>
 
 <!-- ==================== HERO ==================== -->
 <section class="hero">
@@ -1557,6 +1730,27 @@
 
 <script>
   'use strict';
+
+  /* ============================================================
+     【0】移动端汉堡菜单
+  ============================================================ */
+  (function() {
+    const toggle = document.getElementById('menuToggle');
+    const menu = document.getElementById('mobileMenu');
+    if (!toggle || !menu) return;
+
+    toggle.addEventListener('click', () => {
+      toggle.classList.toggle('active');
+      menu.classList.toggle('open');
+    });
+
+    menu.querySelectorAll('a').forEach(a => {
+      a.addEventListener('click', () => {
+        toggle.classList.remove('active');
+        menu.classList.remove('open');
+      });
+    });
+  })();
 
   /* ============================================================
      【1】顶部滚动进度条 — 原生 JS，无依赖
