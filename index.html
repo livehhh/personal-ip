@@ -61,8 +61,8 @@
     --nb-pink: #FDA4AF;
     --nb-orange: #FDBA74;
     --nb-cream: #FEF3C7;
-    /* Hero 背景（匹配视频 Chroma Key 色） */
-    --bg-hero: rgb(136, 138, 143);
+    /* Hero 背景（匹配视频灰色 Chroma Key 色 rgb(153,154,160)） */
+    --bg-hero: rgb(153, 154, 160);
     --bg-0: #8b9683;
     --bg-1: #9ea895;
     --bg-2: #a8b1a0;
@@ -172,23 +172,23 @@
     width: 100%;
     height: 100vh;
     min-height: 700px;
-    /* 底色 + 视频同款云朵光纹 */
+    /* 底色 + 视频同款云朵光纹（精确匹配视频背景 rgb(153,154,160)） */
     background:
       /* 左上斜向柔光（模拟视频里的云朵高光） */
       linear-gradient(135deg,
-        rgba(165, 168, 173, 0.55) 0%,
-        rgba(150, 152, 157, 0.35) 25%,
-        rgba(136, 138, 143, 0) 50%),
+        rgba(175, 177, 184, 0.5) 0%,
+        rgba(160, 162, 168, 0.3) 25%,
+        rgba(153, 154, 160, 0) 50%),
       /* 右下偏暗 */
       radial-gradient(ellipse at 85% 90%,
-        rgba(115, 117, 122, 0.4) 0%,
-        rgba(136, 138, 143, 0) 55%),
+        rgba(130, 131, 137, 0.4) 0%,
+        rgba(153, 154, 160, 0) 55%),
       /* 中心偏亮 */
       radial-gradient(ellipse at 50% 40%,
-        rgba(155, 157, 162, 0.3) 0%,
-        rgba(136, 138, 143, 0) 60%),
-      /* 底色 */
-      rgb(136, 138, 143);
+        rgba(165, 167, 173, 0.25) 0%,
+        rgba(153, 154, 160, 0) 60%),
+      /* 底色（精确匹配视频背景） */
+      rgb(153, 154, 160);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -584,6 +584,31 @@
 
   .hero-character {
     animation: floatChar 5s ease-in-out infinite;
+  }
+
+  /* ========== 滚动渐入动效 ========== */
+  .reveal {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: opacity, transform;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .reveal-delay-1 { transition-delay: 0.08s; }
+  .reveal-delay-2 { transition-delay: 0.16s; }
+  .reveal-delay-3 { transition-delay: 0.24s; }
+  .reveal-delay-4 { transition-delay: 0.32s; }
+
+  /* ========== 点击粒子 Canvas ========== */
+  #particleCanvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
   }
 
   /* ========== SECTION 通用 — Neo-Brutalism ========== */
@@ -1188,6 +1213,9 @@
 </style>
 </head>
 <body>
+
+<!-- 点击粒子 Canvas -->
+<canvas id="particleCanvas"></canvas>
 
 <!-- 顶部滚动进度条 -->
 <div class="scroll-progress" id="scrollProgress"></div>
@@ -1848,12 +1876,14 @@
       if (hueDiff > 180) hueDiff = 360 - hueDiff;
       const rgbDist = Math.sqrt((r-bgR)**2 + (g-bgG)**2 + (b-bgB)**2);
 
-      // 【2】双通路判定（精确卡皮肤边界 rgbDist=50）：
-      //   A. RGB 距离 < 48（只有和背景几乎完全一样的像素）
-      //   B. hue 差 < 28 AND 饱和度 < 0.32（灰度绿/黄绿也能抓到）
-      // 皮肤 hue≈25° 与背景 hue≈119° 差 94° >> 28 → 天然不触发
-      const isBg = (rgbDist < RGB_T) ||
-                   (hueDiff < HUE_T && sat < SAT_T);
+      // 【2】灰色背景专用判定：
+      //   A. 低饱和度（<0.12）= 灰色 → 背景（核心！皮肤 sat>0.15）
+      //   B. RGB 距离极小（<25）→ 背景
+      //   C. hue 差小 AND 饱和度低 → 背景
+      // 皮肤 hue≈25° 与灰色背景 hue≈223° 差 198° >> 35 → 天然不触发
+      const isBg = (sat < SAT_T) ||
+                   (rgbDist < RGB_T) ||
+                   (hueDiff < HUE_T && sat < SAT_T * 1.5);
       mask[k] = isBg ? 0 : 255;
     }
     return mask;
@@ -2004,9 +2034,8 @@
     return final;
   }
 
-  // 新视频背景为统一灰色，直接显示即可，无需抠图
+  // 灰色背景视频：用饱和度阈值为主（灰色 sat≈0.05 极低，皮肤/衣物 sat>0.15）
   function startChromaKey() {
-    return;
     if (chromaReady) return;
     const w = video.videoWidth;
     const h = video.videoHeight;
@@ -2050,10 +2079,11 @@
         BG = {
           r:rS/n, g:gS/n, b:bS/n,
           h:hS/n, s:sS/n, v:vS/n,
-          hueT: 28,                                     // 背景 hue≈119° 皮肤 hue≈25° 差 94° → 安全
-          satT: Math.min(0.32, sS/n + 0.18),            // 背景 sat≈0.143 皮肤 sat≈0.36 → 安全边界
-          rgbT: 38,                                     // 降低阈值：更激进地抠掉边缘绿幕残留
-          vT: 0.22                                      // 稍微提高亮度保护阈值
+          // 灰色背景专用参数：以饱和度为主武器
+          hueT: 35,                                       // 背景 hue≈223° 皮肤 hue≈25° 差 198° → 极安全
+          satT: 0.12,                                     // ⭐ 核心阈值：背景 sat≈0.05 全部 < 0.12；皮肤/衣物 sat>0.15 → 完美分割
+          rgbT: 25,                                       // 灰色三通道差异小，用小阈值
+          vT: 0.22                                        // 亮暗衣物保护
         };
 
         video.style.display = 'none';
@@ -2143,6 +2173,92 @@
   video.addEventListener('canplay', startChromaKey);
   video.addEventListener('play', startChromaKey);
   setTimeout(startChromaKey, 1500);
+
+  /* ========== 滚动渐入动效（IntersectionObserver，零依赖） ========== */
+  (function() {
+    // 自动给 section 内的卡片元素加 reveal class
+    document.querySelectorAll('section').forEach(sec => {
+      const children = sec.querySelectorAll('.about-card, .about-photo, .work-card, .exp-card, .cert-card, .edu-card, .eval-card, .contact-card, .section-title, .section-num');
+      children.forEach((el, i) => {
+        el.classList.add('reveal');
+        if (i % 4 === 1) el.classList.add('reveal-delay-1');
+        else if (i % 4 === 2) el.classList.add('reveal-delay-2');
+        else if (i % 4 === 3) el.classList.add('reveal-delay-3');
+      });
+    });
+
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  })();
+
+  /* ========== 点击粒子效果（原生 Canvas） ========== */
+  (function() {
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    const particles = [];
+    const COLORS = ['#C084FC', '#FDE047', '#A3E635', '#38BDF8', '#FDA4AF', '#fff'];
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    function spawn(x, y) {
+      const count = 14 + Math.floor(Math.random() * 6);
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+        const speed = 2 + Math.random() * 4;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1,
+          life: 1,
+          decay: 0.015 + Math.random() * 0.02,
+          size: 3 + Math.random() * 4,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)]
+        });
+      }
+    }
+
+    document.addEventListener('click', e => spawn(e.clientX, e.clientY));
+    document.addEventListener('touchstart', e => {
+      const t = e.touches[0];
+      if (t) spawn(t.clientX, t.clientY);
+    });
+
+    function tick() {
+      ctx.clearRect(0, 0, W, H);
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.12; // 重力
+        p.vx *= 0.98;
+        p.life -= p.decay;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      requestAnimationFrame(tick);
+    }
+    tick();
+  })();
 </script>
 
 </body>
