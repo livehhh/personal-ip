@@ -172,37 +172,59 @@
     width: 100%;
     height: 100vh;
     min-height: 700px;
-    /* 与视频背景 RGB(136,138,143) 完全一致，人物边缘零可见 */
-    background: rgb(136, 138, 143);
+    /* 底色 + 视频同款云朵光纹 */
+    background:
+      /* 左上斜向柔光（模拟视频里的云朵高光） */
+      linear-gradient(135deg,
+        rgba(165, 168, 173, 0.55) 0%,
+        rgba(150, 152, 157, 0.35) 25%,
+        rgba(136, 138, 143, 0) 50%),
+      /* 右下偏暗 */
+      radial-gradient(ellipse at 85% 90%,
+        rgba(115, 117, 122, 0.4) 0%,
+        rgba(136, 138, 143, 0) 55%),
+      /* 中心偏亮 */
+      radial-gradient(ellipse at 50% 40%,
+        rgba(155, 157, 162, 0.3) 0%,
+        rgba(136, 138, 143, 0) 60%),
+      /* 底色 */
+      rgb(136, 138, 143);
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
 
-  /* 极淡白色渐变 — 中心最自然不破坏融合，边缘微微泛白增加层次 */
+  /* 第二层：横向柔光带（模拟云朵横向展开） */
   .hero::before {
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(
-      ellipse at 50% 45%,
-      rgba(255, 255, 255, 0.00) 0%,
-      rgba(255, 255, 255, 0.00) 35%,
-      rgba(255, 255, 255, 0.03) 60%,
-      rgba(255, 255, 255, 0.07) 100%
-    );
+    background:
+      /* 顶部光带 */
+      radial-gradient(ellipse 80% 20% at 50% 5%,
+        rgba(175, 178, 183, 0.35) 0%,
+        rgba(136, 138, 143, 0) 70%),
+      /* 左下暗部 */
+      radial-gradient(ellipse 50% 40% at 10% 100%,
+        rgba(110, 112, 117, 0.35) 0%,
+        rgba(136, 138, 143, 0) 70%);
     pointer-events: none;
     z-index: 1;
   }
 
-  /* 轻微暗角 — 已移除，保持 hero 与视频背景完全一致 */
+  /* 第三层：极淡噪点颗粒感（让纹路不那么"塑料"） */
   .hero::after {
     content: "";
     position: absolute;
     inset: 0;
-    background: none;
+    background-image:
+      radial-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 2px;
     pointer-events: none;
     z-index: 1;
+    mix-blend-mode: overlay;
   }
 
   /* ========== NAVBAR ========== */
