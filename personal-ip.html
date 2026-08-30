@@ -61,12 +61,12 @@
     --nb-pink: #FDA4AF;
     --nb-orange: #FDBA74;
     --nb-cream: #FEF3C7;
-    /* 旧色保留（hero 绿幕 + 各 section 分层灰绿） */
-    --bg-hero: rgb(96, 111, 96);
-    --bg-0: #8b9683;
-    --bg-1: #9ea895;
-    --bg-2: #a8b1a0;
-    --bg-3: #7e8a76;
+    /* 各 section 分层灰绿（低透明度 → 鲜艳渐变透出） */
+    --bg-hero: rgba(96, 111, 96, 0.55);
+    --bg-0: rgba(139, 150, 131, 0.55);
+    --bg-1: rgba(158, 168, 149, 0.55);
+    --bg-2: rgba(168, 177, 160, 0.55);
+    --bg-3: rgba(126, 138, 118, 0.55);
     /* 硬阴影 & 边框变量 */
     --nb-shadow: 4px 4px 0px 0px var(--nb-black);
     --nb-shadow-sm: 2px 2px 0px 0px var(--nb-black);
@@ -85,10 +85,33 @@
 
   /* ==== Neo-Brutalism 基础层 ==== */
   body {
-    background: var(--bg-1);
+    background: transparent;
   }
-  /* 黑色波点纹理 — hero 下方（用 JS 注入 wrapper，或直接给 body 但排除 hero） */
-  /* 先给 body 整体加点淡波点，hero 再盖一层 */
+
+  /* ==== 动态渐变背景 — NB 鲜艳配色，20s 缓动循环 ==== */
+  @keyframes gradientFlow {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(135deg,
+      #A3E635 0%,
+      #38BDF8 14%,
+      #C084FC 28%,
+      #FDE047 42%,
+      #FDA4AF 56%,
+      #FDBA74 70%,
+      #A3E635 84%,
+      #38BDF8 100%
+    );
+    background-size: 400% 400%;
+    animation: gradientFlow 20s ease infinite;
+  }
 
   /* ==== Neo-Brutalism 全局组件 ==== */
   .nb-card {
@@ -172,8 +195,8 @@
     width: 100%;
     height: 100vh;
     min-height: 700px;
-    /* 与视频原始绿幕背景 RGB(96,111,96) 完全一致，人物边缘零可见 */
-    background: rgb(96, 111, 96);
+    /* 半透明 → 透出 body 动态渐变 */
+    background: var(--bg-hero);
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -372,14 +395,14 @@
     white-space: nowrap;
   }
 
-  /* 人物视频容器 */
+  /* 人物形象容器 */
   .hero-character {
     position: absolute;
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: clamp(240px, 28vw, 420px);
-    height: 90vh;
+    width: clamp(320px, 40vw, 600px);
+    height: 66vh;
     z-index: 10;
     pointer-events: none;
     display: flex;
@@ -387,17 +410,16 @@
     justify-content: center;
   }
 
-  .hero-character video,
-  .hero-character canvas {
+  .hero-character img {
     height: 100%;
     width: auto;
-    max-width: 100%;
+    max-width: none;
     display: block;
     mix-blend-mode: normal;
     object-fit: contain;
     background: transparent;
-    /* Rim light: 极轻微的边缘光，增强与页面背景的视觉分离 */
-    filter: drop-shadow(0 0 1px rgba(255,255,255,0.2)) drop-shadow(0 0 3px rgba(0,0,0,0.08));
+    image-rendering: -webkit-optimize-contrast;
+    filter: contrast(1.08) saturate(1.12) drop-shadow(0 0 2px rgba(0,0,0,0.15));
   }
 
   /* ========== 左下定位文案 — Neo-Brutalism 白色卡片 + 硬阴影 ========== */
@@ -1010,7 +1032,7 @@
     .nav-links { display: none; }
 
     .hero-title { font-size: clamp(60px, 17vw, 160px); }
-    .hero-character { width: 200px; height: 60vh; bottom: 50px; }
+    .hero-character { width: 260px; height: 50vh; bottom: 20px; }
 
     .hero-tagline {
       position: relative;
@@ -1200,13 +1222,9 @@
       <span class="typer-text" id="typerText">数据分析探索者</span><span class="typer-cursor"></span>
     </div>
 
-    <!-- 人物视频 -->
+    <!-- 人物形象（UNet 抠像 · 透明背景 WebP，无需 Canvas Chroma Key） -->
     <div class="hero-character">
-      <video id="charVideo" autoplay loop muted playsinline preload="auto">
-        <source src="a300e635ae0fa6067914731d0a36f30b.mp4" type="video/mp4">
-      </video>
-      <!-- Canvas 备用方案（chroma key 抠图） -->
-      <canvas id="charCanvas" class="chroma" style="display:none"></canvas>
+      <img id="charImg" src="char_transparent.webp" alt="WANGSIYA 形象" />
     </div>
   </div>
 
@@ -1333,10 +1351,10 @@
     <div class="exp-card">
       <div class="exp-card-head">
         <div>
-          <span class="exp-card-role" style="background:var(--purple);color:#fff">数学课代表</span>
+          <span class="exp-card-role" style="background:var(--nb-purple);color:#fff">数学课代表</span>
           <h3>宁德市博雅培文学校</h3>
         </div>
-        <span class="exp-card-date" style="color:var(--pink-text);border-color:rgba(232,165,192,0.5);background:rgba(232,165,192,0.08)">2023.09 – 2026.06</span>
+        <span class="exp-card-date" style="color:var(--nb-pink);border-color:rgba(232,165,192,0.5);background:rgba(232,165,192,0.08)">2023.09 – 2026.06</span>
       </div>
       <ul>
         <li>连续 3 年担任班级数学课代表，协助批改作业、整理错题集，每周组织 2 次课后答疑小组，班级数学平均分从 78 分提升至 86 分（+10.3%）。</li>
@@ -1778,318 +1796,6 @@
     }, 1500);
   });
 
-  // ========== 视频背景去除 — 逐帧 Chroma Key + 3px 腐蚀 + 连通性过滤 + 时域稳定 ==========
-  const video = document.getElementById('charVideo');
-  const canvas = document.getElementById('charCanvas');
-  const ctx = canvas.getContext('2d');
-  let chromaReady = false;
-  let BG = null;
-
-  function rgbToHsv(r, g, b) {
-    r /= 255; g /= 255; b /= 255;
-    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h = 0, s = 0, v = max;
-    const d = max - min;
-    if (d !== 0) {
-      s = d / max;
-      switch (max) {
-        case r: h = ((g - b) / d + (g < b ? 6 : 0)); break;
-        case g: h = ((b - r) / d + 2); break;
-        case b: h = ((r - g) / d + 4); break;
-      }
-      h *= 60;
-    }
-    return [h, s, v];
-  }
-
-  function chromaMask(w, h, d) {
-    const mask = new Uint8Array(w * h);
-    const HUE_T = BG.hueT;
-    const SAT_T = BG.satT;
-    const RGB_T = BG.rgbT;
-    const V_T = BG.vT;
-    const bgR = BG.r, bgG = BG.g, bgB = BG.b;
-    const bgH = BG.h, bgS = BG.s, bgV = BG.v;
-
-    for (let i = 0, k = 0; i < d.length; i += 4, k++) {
-      const r = d[i], g = d[i+1], b = d[i+2];
-      const [hue, sat, v] = rgbToHsv(r, g, b);
-
-      // 【1】亮度保护：与背景明度差异很大 → 直接判前景
-      //     挡住白色衣服(v≈0.7)和深色头发/手机(v≈0.15)
-      if (Math.abs(v - bgV) > V_T) {
-        mask[k] = 255;
-        continue;
-      }
-
-      let hueDiff = Math.abs(hue - bgH);
-      if (hueDiff > 180) hueDiff = 360 - hueDiff;
-      const rgbDist = Math.sqrt((r-bgR)**2 + (g-bgG)**2 + (b-bgB)**2);
-
-      // 【2】双通路判定（精确卡皮肤边界 rgbDist=50）：
-      //   A. RGB 距离 < 48（只有和背景几乎完全一样的像素）
-      //   B. hue 差 < 28 AND 饱和度 < 0.32（灰度绿/黄绿也能抓到）
-      // 皮肤 hue≈25° 与背景 hue≈119° 差 94° >> 28 → 天然不触发
-      const isBg = (rgbDist < RGB_T) ||
-                   (hueDiff < HUE_T && sat < SAT_T);
-      mask[k] = isBg ? 0 : 255;
-    }
-    return mask;
-  }
-
-  // 连通性过滤：只保留与主前景连通的区域（DFS 栈，O(n)）
-  function keepConnected(w, h, mask) {
-    const label = new Uint8Array(w * h);
-    const stack = [];
-    // 种子点：画面底部中心（人物脚部位置）
-    const seedX = Math.floor(w / 2);
-    const seedY = Math.floor(h * 0.75);
-    if (mask[seedY * w + seedX] === 255) {
-      stack.push([seedX, seedY]);
-      label[seedY * w + seedX] = 1;
-    }
-    // 种子点不在前景 → 快速扫描找前景
-    if (stack.length === 0) {
-      outer:
-      for (let r = Math.floor(h * 0.3); r < h; r += 8) {
-        for (let c = 0; c < w; c += 8) {
-          if (mask[r * w + c] === 255) {
-            stack.push([c, r]);
-            label[r * w + c] = 1;
-            break outer;
-          }
-        }
-      }
-    }
-
-    while (stack.length) {
-      const [x, y] = stack.pop();
-      for (let dy = -1; dy <= 1; dy++) {
-        for (let dx = -1; dx <= 1; dx++) {
-          if (dx === 0 && dy === 0) continue;
-          const nx = x + dx, ny = y + dy;
-          if (nx < 0 || nx >= w || ny < 0 || ny >= h) continue;
-          const nIdx = ny * w + nx;
-          if (mask[nIdx] === 255 && label[nIdx] === 0) {
-            label[nIdx] = 1;
-            stack.push([nx, ny]);
-          }
-        }
-      }
-    }
-
-    // 未被标记的前景像素 → 设为背景
-    for (let k = 0; k < w * h; k++) {
-      if (mask[k] === 255 && label[k] === 0) mask[k] = 0;
-    }
-  }
-
-  function erode3px(w, h, mask) {
-    for (let iter = 0; iter < 3; iter++) {
-      const cur = new Uint8Array(mask);
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          const idx = y * w + x;
-          if (cur[idx] === 255) {
-            let keep = true;
-            for (let dy = -1; dy <= 1 && keep; dy++) {
-              for (let dx = -1; dx <= 1 && keep; dx++) {
-                if (cur[(y+dy)*w + (x+dx)] === 0) keep = false;
-              }
-            }
-            if (!keep) mask[idx] = 0;
-          }
-        }
-      }
-    }
-  }
-
-  // 形态学膨胀：前景像素如果有背景邻居 → 把邻居恢复为前景
-  function dilate2px(w, h, mask) {
-    for (let iter = 0; iter < 2; iter++) {
-      const cur = new Uint8Array(mask);
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          const idx = y * w + x;
-          if (cur[idx] === 0) {
-            let fgNeighbor = false;
-            for (let dy = -1; dy <= 1 && !fgNeighbor; dy++) {
-              for (let dx = -1; dx <= 1 && !fgNeighbor; dx++) {
-                if (cur[(y+dy)*w + (x+dx)] === 255) fgNeighbor = true;
-              }
-            }
-            if (fgNeighbor) mask[idx] = 255;
-          }
-        }
-      }
-    }
-  }
-
-  // 多次激进填洞：阈值降为 ≥5，迭代 3 次
-  function fillIslandsN(w, h, mask, iterations) {
-    for (let it = 0; it < iterations; it++) {
-      const cur = new Uint8Array(mask);
-      for (let y = 1; y < h - 1; y++) {
-        for (let x = 1; x < w - 1; x++) {
-          const idx = y * w + x;
-          if (cur[idx] === 255) continue;
-          let fg = 0;
-          for (let dy = -1; dy <= 1; dy++) {
-            for (let dx = -1; dx <= 1; dx++) {
-              if (cur[(y+dy)*w + (x+dx)] === 255) fg++;
-            }
-          }
-          if (fg >= 5) mask[idx] = 255;
-        }
-      }
-    }
-  }
-
-  // 3×3 中值滤波（二值优化）：mask 只有 0 和 255，直接 count 255 个数
-  function medianFilter3x3(w, h, mask) {
-    const result = new Uint8Array(mask);
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
-        let count = 0;
-        for (let dy = -1; dy <= 1; dy++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (mask[(y+dy)*w + (x+dx)] === 255) count++;
-          }
-        }
-        // 9 格中值：≥5 个前景 → 前景
-        result[y*w + x] = count >= 5 ? 255 : 0;
-      }
-    }
-    return result;
-  }
-
-  function edgeFeather(w, h, mask) {
-    const final = new Uint8Array(mask);
-    for (let y = 1; y < h - 1; y++) {
-      for (let x = 1; x < w - 1; x++) {
-        const idx = y * w + x;
-        if (mask[idx] !== 255) continue;
-        let hasBg = false;
-        for (let dy = -1; dy <= 1 && !hasBg; dy++) {
-          for (let dx = -1; dx <= 1 && !hasBg; dx++) {
-            if (dx === 0 && dy === 0) continue;
-            if (mask[(y+dy)*w + (x+dx)] === 0) hasBg = true;
-          }
-        }
-        if (hasBg) final[idx] = 180;
-      }
-    }
-    return final;
-  }
-
-  function startChromaKey() {
-    if (chromaReady) return;
-    const w = video.videoWidth;
-    const h = video.videoHeight;
-    if (!w || !h) return;
-    chromaReady = true;
-
-    canvas.width = w;
-    canvas.height = h;
-    canvas.style.background = 'transparent';
-
-    // 半分辨率处理 canvas（像素量减 4 倍 → 流畅度飞跃）
-    const hw = Math.floor(w / 2);
-    const hh = Math.floor(h / 2);
-    const hCanvas = document.createElement('canvas');
-    const hCtx = hCanvas.getContext('2d');
-    hCanvas.width = hw; hCanvas.height = hh;
-
-    try { video.currentTime = Math.min(0.5, video.duration * 0.1 || 0.5); } catch(e) {}
-
-    setTimeout(() => {
-      try {
-        // 背景采样用半分辨率（更快）
-        hCtx.drawImage(video, 0, 0, hw, hh);
-        const img = hCtx.getImageData(0, 0, hw, hh).data;
-
-        const sp = [
-          [2,2],[hw-3,2],[2,hh-3],[hw-3,hh-3],
-          [Math.floor(hw/2),2],[Math.floor(hw/2),hh-3],
-          [2,Math.floor(hh/2)],[hw-3,Math.floor(hh/2)],
-          [Math.floor(hw*0.1),2],[Math.floor(hw*0.9),2],
-          [2,Math.floor(hh*0.1)],[2,Math.floor(hh*0.9)],
-          [hw-3,Math.floor(hh*0.1)],[hw-3,Math.floor(hh*0.9)]
-        ];
-        let rS=0,gS=0,bS=0,hS=0,sS=0,vS=0,n=0;
-        for (const [sx,sy] of sp) {
-          const idx = (sy*hw+sx)*4;
-          rS+=img[idx];gS+=img[idx+1];bS+=img[idx+2];
-          const [hu,sa,va]=rgbToHsv(img[idx],img[idx+1],img[idx+2]);
-          hS+=hu;sS+=sa;vS+=va;n++;
-        }
-        BG = {
-          r:rS/n, g:gS/n, b:bS/n,
-          h:hS/n, s:sS/n, v:vS/n,
-          hueT: 28,                                     // 背景 hue≈119° 皮肤 hue≈25° 差 94° → 安全
-          satT: Math.min(0.32, sS/n + 0.18),            // 背景 sat≈0.143 皮肤 sat≈0.36 → 安全边界
-          rgbT: 48,                                     // ⭐ 精确卡点：背景=0~10 / 皮肤 min=50
-          vT: 0.20                                      // 皮肤 v≈0.52 能通过；白衣服 v≈0.7 被挡住
-        };
-
-        video.style.display = 'none';
-        canvas.style.display = 'block';
-
-        // 处理结果临时 canvas（半分辨率）
-        const outCanvas = document.createElement('canvas');
-        const outCtx = outCanvas.getContext('2d');
-        outCanvas.width = hw; outCanvas.height = hh;
-
-        function render() {
-          if (!video.paused && !video.ended) {
-            // 1. 画到半分辨率处理 canvas
-            hCtx.drawImage(video, 0, 0, hw, hh);
-            const frame = hCtx.getImageData(0, 0, hw, hh);
-            const d = frame.data;
-
-            // 2. Chroma key（半分辨率）
-            const mask = chromaMask(hw, hh, d);
-
-            // 3. 连通性过滤
-            keepConnected(hw, hh, mask);
-
-            // 4. 形态学开运算
-            erode3px(hw, hh, mask);
-            dilate2px(hw, hh, mask);
-
-            // 5. 多次激进填洞
-            fillIslandsN(hw, hh, mask, 3);
-
-            // 6. 二值中值滤波
-            const smoothed = medianFilter3x3(hw, hh, mask);
-
-            // 7. alpha 硬阈值化（hero 背景=视频背景 → 不需要羽化，硬边缘零可见）
-            //    背景色一致时，半透明边缘反而因为混了前景残色产生光晕
-            for (let k = 0; k < hw * hh; k++) {
-              d[k*4+3] = smoothed[k] >= 128 ? 255 : 0;
-            }
-            outCtx.putImageData(frame, 0, 0);
-
-            // 9. 放大到主 canvas（关掉抗锯齿 → 保留硬 alpha 边缘，不让 GPU 再制造光晕）
-            ctx.imageSmoothingEnabled = false;
-            ctx.clearRect(0, 0, w, h);
-            ctx.drawImage(outCanvas, 0, 0, hw, hh, 0, 0, w, h);
-          }
-          requestAnimationFrame(render);
-        }
-        render();
-      } catch(err) {
-        console.error('ChromaKey error:', err);
-        video.style.display = 'block';
-        canvas.style.display = 'none';
-      }
-    }, 500);
-  }
-
-  video.addEventListener('loadeddata', startChromaKey);
-  video.addEventListener('canplay', startChromaKey);
-  video.addEventListener('play', startChromaKey);
-  setTimeout(startChromaKey, 1500);
 </script>
 
 </body>
